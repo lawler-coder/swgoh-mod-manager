@@ -1,0 +1,2 @@
+# swgoh-mod-manager
+SWGOH
