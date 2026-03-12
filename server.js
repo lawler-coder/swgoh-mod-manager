@@ -8,14 +8,34 @@ const COMLINK = 'https://swgoh-app.onrender.com';
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
+// Fetch with retry - Comlink on Render free tier can take 30-60s to wake up
+async function fetchWithRetry(url, options, retries = 6, delayMs = 10000) {
+  for (let i = 0; i < retries; i++) {
+    try {
+      console.log(`Attempt ${i + 1}/${retries}: ${url}`);
+      const res = await fetch(url, options);
+      if (res.status === 502 || res.status === 503) {
+        console.log(`Got ${res.status}, Comlink waking up... waiting ${delayMs}ms`);
+        if (i < retries - 1) await new Promise(r => setTimeout(r, delayMs));
+        continue;
+      }
+      return res;
+    } catch (err) {
+      console.log(`Attempt ${i + 1} failed: ${err.message}`);
+      if (i < retries - 1) await new Promise(r => setTimeout(r, delayMs));
+    }
+  }
+  throw new Error('Comlink did not respond after multiple attempts. Try again in a minute.');
+}
+
 // Test Comlink connectivity
 app.get('/api/test', async (req, res) => {
   try {
-    const response = await fetch(`${COMLINK}/metadata`, {
+    const response = await fetchWithRetry(`${COMLINK}/metadata`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: '{}'
-    });
+    }, 3, 5000);
     const text = await response.text();
     res.json({ ok: true, status: response.status, comlink: COMLINK, preview: text.slice(0, 300) });
   } catch (err) {
@@ -27,12 +47,11 @@ app.get('/api/test', async (req, res) => {
 app.post('/api/player', async (req, res) => {
   console.log('Player request body:', JSON.stringify(req.body));
   try {
-    const response = await fetch(`${COMLINK}/player`, {
+    const response = await fetchWithRetry(`${COMLINK}/player`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(req.body)
     });
-    console.log('Comlink status:', response.status);
     const text = await response.text();
     if (!response.ok) {
       console.error('Comlink error:', text.slice(0, 500));
