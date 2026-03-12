@@ -314,7 +314,7 @@ async function fetchRoster(){
   fetchedRoster=[];
   checkShowEventCard();
   hideEl('fetch-error'); hideEl('fetch-result');
-  showStatus('📡 Fetching your roster...');
+  showStatus('📡 Fetching roster... If Comlink is asleep this can take up to 60s — hang tight!');
 
   try {
     // Call our own server's proxy endpoint - no CORS issues
@@ -323,9 +323,8 @@ async function fetchRoster(){
       headers: {'Content-Type':'application/json'},
       body: JSON.stringify({payload:{allyCode:code},enums:false})
     });
-    if(!res.ok) throw new Error(`Server error ${res.status}. Check your ally code.`);
     const data = await res.json();
-    if(data.error) throw new Error(data.error);
+    if(!res.ok || data.error) throw new Error(data.error || `Server error ${res.status}`);
 
     const name=data.name||'Commander';
     const gp=data.galacticPower?Number(data.galacticPower).toLocaleString():'';
