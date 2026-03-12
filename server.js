@@ -11,16 +11,25 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 // Proxy player roster from Comlink
 app.post('/api/player', async (req, res) => {
+  console.log('Player request received:', JSON.stringify(req.body));
+  console.log('Calling Comlink at:', `${COMLINK}/player`);
   try {
     const response = await fetch(`${COMLINK}/player`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(req.body),
     });
-    if (!response.ok) throw new Error(`Comlink returned ${response.status}`);
+    console.log('Comlink response status:', response.status);
+    if (!response.ok) {
+      const text = await response.text();
+      console.log('Comlink error body:', text);
+      throw new Error(`Comlink returned ${response.status}: ${text}`);
+    }
     const data = await response.json();
+    console.log('Comlink returned units:', (data.rosterUnit||[]).length);
     res.json(data);
   } catch (err) {
+    console.error('Player proxy error:', err.message);
     res.status(500).json({ error: err.message });
   }
 });
