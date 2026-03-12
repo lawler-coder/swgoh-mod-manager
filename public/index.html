@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>SWGOH Roster Command</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;800&family=Rajdhani:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;-webkit-tap-highlight-color:transparent;margin:0;padding:0}
+html,body{min-height:100vh;background:linear-gradient(160deg,#040810 0%,#0c1020 55%,#06101a 100%);font-family:'Rajdhani',sans-serif;color:#c0b8a8}
+@keyframes twinkle{from{opacity:.15}to{opacity:1}}
+@keyframes fadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+@keyframes glow{0%,100%{box-shadow:0 0 8px #c9a84c40}50%{box-shadow:0 0 18px #c9a84c}}
+@keyframes spin{to{transform:rotate(360deg)}}
+#stars{position:fixed;inset:0;pointer-events:none;z-index:0;overflow:hidden}
+.star{position:absolute;border-radius:50%;background:#fff;animation:twinkle var(--d,3s) ease-in-out infinite alternate}
+#app{position:relative;z-index:1;max-width:560px;margin:0 auto;padding:28px 13px 80px}
+.header{text-align:center;margin-bottom:22px}
+.header-eyebrow{font-size:9px;color:#c9a84c;letter-spacing:.3em;margin-bottom:8px;text-transform:uppercase}
+h1{font-family:'Orbitron',sans-serif;font-weight:800;font-size:clamp(17px,5.5vw,32px);background:linear-gradient(180deg,#f5e6c8 0%,#c9a84c 55%,#7a5e18 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;filter:drop-shadow(0 0 14px rgba(201,168,76,.35));margin-bottom:4px}
+.header-note{color:#555;font-size:11px;letter-spacing:.05em}
+.tabs{display:flex;gap:8px;margin-bottom:14px}
+.tab{flex:1;padding:11px 0;border-radius:8px;cursor:pointer;font-family:'Orbitron',sans-serif;font-size:10px;letter-spacing:.08em;border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.03);color:#555;transition:all .2s}
+.tab.active{background:rgba(201,168,76,.15);border-color:#c9a84c;color:#e8dcc8}
+.card{background:rgba(6,10,20,.92);border:1px solid rgba(201,168,76,.25);border-radius:12px;padding:18px 16px;backdrop-filter:blur(10px);margin-bottom:14px;animation:fadeIn .4s ease}
+.card.highlight{border-color:rgba(201,168,76,.5);box-shadow:0 0 30px rgba(201,168,76,.08)}
+.card-label{font-size:10px;color:#555;letter-spacing:.12em;text-transform:uppercase;margin-bottom:7px;display:block}
+.row{display:flex;gap:8px;align-items:center}
+input{background:rgba(255,255,255,.04);border:1px solid rgba(201,168,76,.25);border-radius:7px;padding:11px 13px;color:#e8dcc8;font-size:15px;font-family:'Rajdhani',sans-serif;outline:none;width:100%;transition:border-color .2s}
+input:focus{border-color:#c9a84c}
+input::placeholder{color:#444}
+.btn{border:none;border-radius:7px;padding:11px 16px;font-family:'Orbitron',sans-serif;font-weight:700;font-size:10px;cursor:pointer;transition:filter .2s;letter-spacing:.08em}
+.btn-gold{background:#c9a84c;color:#060a14}
+.btn-gold:hover{filter:brightness(1.1)}
+.btn-gold:disabled{background:#2a2a2a;color:#555;cursor:not-allowed;filter:none;animation:none}
+.btn-outline{background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.12);color:#777;font-family:'Rajdhani',sans-serif;font-size:13px;font-weight:500;letter-spacing:0}
+.btn-dashed{width:100%;padding:13px;border-radius:8px;background:rgba(201,168,76,.07);border:1px dashed rgba(201,168,76,.3);color:#c9a84c;font-family:'Rajdhani',sans-serif;font-size:14px;font-weight:600;cursor:pointer}
+.btn-analyze{width:100%;padding:14px;border-radius:8px;background:linear-gradient(135deg,#c9a84c,#8a6a1a);border:none;color:#060a14;font-family:'Orbitron',sans-serif;font-weight:800;font-size:11px;letter-spacing:.12em;text-transform:uppercase;cursor:pointer;animation:glow 2s infinite}
+.btn-analyze:disabled{background:rgba(80,80,80,.2);color:#555;cursor:not-allowed;animation:none}
+.divider{display:flex;align-items:center;gap:10px;margin:14px 0}
+.divider::before,.divider::after{content:'';flex:1;height:1px}
+.divider::before{background:linear-gradient(to right,transparent,#c9a84c40)}
+.divider::after{background:linear-gradient(to left,transparent,#c9a84c40)}
+.divider-dot{width:5px;height:5px;border-radius:50%;background:#c9a84c;box-shadow:0 0 6px #c9a84c;flex-shrink:0}
+.status{display:flex;align-items:center;gap:10px;font-size:13px;color:#c9a84c;margin-top:8px}
+.spinner{width:14px;height:14px;border:2px solid #c9a84c;border-top-color:transparent;border-radius:50%;animation:spin .8s linear infinite;flex-shrink:0}
+.error-box{padding:12px 14px;background:rgba(200,70,70,.1);border:1px solid rgba(200,70,70,.3);border-radius:8px;color:#f08080;font-size:13px;line-height:1.6;margin-top:10px}
+.success-text{color:#7ac87a;font-size:14px;font-weight:600}
+.unit-list{display:flex;flex-direction:column;gap:5px;max-height:220px;overflow-y:auto;margin-top:10px}
+.unit-row{display:flex;align-items:center;gap:8px;background:rgba(255,255,255,.03);border-radius:7px;padding:8px 10px;border:1px solid rgba(201,168,76,.12)}
+.unit-name{flex:1;color:#e8dcc8;font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.badge{border-radius:4px;padding:1px 6px;font-size:10px;font-weight:700;white-space:nowrap}
+.badge-stars{color:#ffd700;font-size:10px}
+.badge-zeta{color:#a78bfa;font-size:10px}
+.badge-omi{color:#f472b6;font-size:10px}
+.event-group{margin-bottom:14px}
+.event-group-label{font-size:10px;color:#444;letter-spacing:.12em;text-transform:uppercase;margin-bottom:7px}
+.event-buttons{display:flex;flex-wrap:wrap;gap:5px}
+.event-btn{background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07);border-radius:6px;padding:7px 11px;color:#666;font-size:12px;cursor:pointer;font-family:'Rajdhani',sans-serif;font-weight:400;transition:all .15s}
+.event-btn.selected{background:rgba(201,168,76,.18);border-color:#c9a84c;color:#e8dcc8;font-weight:600}
+.gear-buttons{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:10px}
+.gear-btn{width:36px;height:32px;border-radius:6px;cursor:pointer;font-family:'Rajdhani',sans-serif;font-size:11px;font-weight:600;transition:all .15s;border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.03);color:#444}
+.star-buttons{display:flex;gap:5px;margin-bottom:10px}
+.star-btn{flex:1;padding:7px 0;border-radius:6px;cursor:pointer;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.03);color:#555;font-size:12px;font-family:'Rajdhani',sans-serif;transition:all .15s}
+.star-btn.active{background:rgba(255,215,0,.15);border-color:rgba(255,215,0,.5);color:#ffd700;font-weight:700}
+.toggle-row{display:flex;gap:4px}
+.toggle-btn{flex:1;padding:7px 0;border-radius:6px;cursor:pointer;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.03);color:#555;font-size:12px;font-family:'Rajdhani',sans-serif;transition:all .15s;text-align:center}
+.toggle-btn.active-z{background:rgba(167,139,250,.15);border-color:rgba(167,139,250,.5);color:#a78bfa;font-weight:700}
+.toggle-btn.active-o{background:rgba(244,114,182,.15);border-color:rgba(244,114,182,.5);color:#f472b6;font-weight:700}
+.section-label{font-size:10px;color:#555;letter-spacing:.12em;text-transform:uppercase;margin-bottom:6px}
+.autocomplete{position:absolute;top:100%;left:0;right:0;z-index:50;background:#0b1120;border:1px solid rgba(201,168,76,.3);border-top:none;border-radius:0 0 8px 8px;overflow:hidden}
+.autocomplete-item{padding:10px 13px;font-size:13px;color:#c8c0b0;cursor:pointer;border-bottom:1px solid rgba(255,255,255,.04)}
+.autocomplete-item:hover{background:rgba(201,168,76,.1)}
+.pos-rel{position:relative}
+.ai-report{font-size:14px;line-height:1.7;color:#c0b8a8}
+.ai-report h3{color:#c9a84c;font-family:'Orbitron',sans-serif;font-size:11px;letter-spacing:.12em;margin:18px 0 8px;text-transform:uppercase}
+.ai-report ul{padding-left:16px;margin:0 0 10px}
+.ai-report li{margin-bottom:5px;line-height:1.6}
+.ai-report p{margin:0 0 10px}
+.ai-report strong{color:#e8dcc8}
+.reanalyze{padding:9px 18px;border-radius:7px;cursor:pointer;background:rgba(201,168,76,.08);border:1px solid rgba(201,168,76,.25);color:#c9a84c;font-family:'Rajdhani',sans-serif;font-size:13px;font-weight:600;margin-top:12px}
+.footer{text-align:center;color:#222;font-size:9px;margin-top:24px;letter-spacing:.08em}
+::-webkit-scrollbar{width:3px}
+::-webkit-scrollbar-thumb{background:#c9a84c30;border-radius:2px}
+.hidden{display:none}
+</style>
+</head>
+<body>
+
+<div id="stars"></div>
+
+<div id="app">
+  <div class="header">
+    <div class="header-eyebrow">◈ Strategic Intelligence Unit ◈</div>
+    <h1>SWGOH ROSTER COMMAND</h1>
+    <div class="header-note">Powered by Comlink · Claude AI</div>
+  </div>
+
+  <div class="tabs">
+    <button class="tab active" id="tab-auto" onclick="switchMode('auto')">⚡ Live Roster</button>
+    <button class="tab" id="tab-manual" onclick="switchMode('manual')">✏ Manual Entry</button>
+  </div>
+
+  <!-- AUTO MODE -->
+  <div class="card" id="panel-auto">
+    <span class="card-label">Enter Your Ally Code</span>
+    <div class="row" style="margin-bottom:12px">
+      <input type="text" id="ally-code" placeholder="e.g. 123456789" inputmode="numeric" onkeydown="if(event.key==='Enter')fetchRoster()">
+      <button class="btn btn-gold" onclick="fetchRoster()" id="fetch-btn" style="white-space:nowrap">FETCH</button>
+    </div>
+    <div id="fetch-status" class="hidden"></div>
+    <div id="fetch-error" class="hidden error-box"></div>
+    <div id="fetch-result" class="hidden"></div>
+  </div>
+
+  <!-- MANUAL MODE -->
+  <div class="card hidden" id="panel-manual">
+    <div class="row" style="margin-bottom:14px">
+      <input type="text" id="player-name" placeholder="Your name (optional)" style="flex:2">
+      <input type="text" id="player-gp" placeholder="Galactic Power" style="flex:1">
+    </div>
+    <div id="manual-roster-list"></div>
+    <div id="add-form-container">
+      <button class="btn-dashed" onclick="showAddForm()">+ Add Character to Roster</button>
+    </div>
+  </div>
+
+  <!-- ADD CHARACTER FORM -->
+  <div class="card hidden" id="add-form-card">
+    <div class="card-label" style="color:#c9a84c">Add Character</div>
+    <div class="pos-rel" style="margin-bottom:10px">
+      <input type="text" id="char-name" placeholder="Character name..." oninput="handleNameInput(this.value)" onblur="setTimeout(hideAutocomplete,200)">
+      <div class="autocomplete hidden" id="autocomplete"></div>
+    </div>
+    <div class="section-label">Stars</div>
+    <div class="star-buttons" style="margin-bottom:10px">
+      <button class="star-btn" id="s4" onclick="setStar(4)">★★★★</button>
+      <button class="star-btn" id="s5" onclick="setStar(5)">★★★★★</button>
+      <button class="star-btn" id="s6" onclick="setStar(6)">★★★★★★</button>
+      <button class="star-btn active" id="s7" onclick="setStar(7)">★★★★★★★</button>
+    </div>
+    <div class="section-label">Gear Level</div>
+    <div class="gear-buttons" id="gear-buttons"></div>
+    <div id="relic-section" class="hidden">
+      <div class="section-label">Relic Level</div>
+      <div class="gear-buttons" id="relic-buttons"></div>
+    </div>
+    <div class="row" style="margin-bottom:14px;align-items:flex-start">
+      <div style="flex:1">
+        <div class="section-label">Zetas</div>
+        <div class="toggle-row">
+          <button class="toggle-btn active-z" id="z0" onclick="setZeta(0)">None</button>
+          <button class="toggle-btn" id="z1" onclick="setZeta(1)">ζ1</button>
+          <button class="toggle-btn" id="z2" onclick="setZeta(2)">ζ2</button>
+          <button class="toggle-btn" id="z3" onclick="setZeta(3)">ζ3</button>
+        </div>
+      </div>
+      <div style="margin-left:8px">
+        <div class="section-label">Omicron</div>
+        <button class="toggle-btn" id="omi-btn" onclick="toggleOmi()" style="padding:7px 14px">Ω No</button>
+      </div>
+    </div>
+    <div class="row">
+      <button class="btn btn-outline" onclick="hideAddForm()" style="flex:1">Cancel</button>
+      <button class="btn btn-gold" onclick="addCharacter()" style="flex:2;padding:11px">+ ADD TO ROSTER</button>
+    </div>
+  </div>
+
+  <!-- EVENT SELECTOR -->
+  <div class="card hidden" id="event-card">
+    <span class="card-label">Select Event</span>
+    <div id="event-groups"></div>
+    <div class="divider"><div class="divider-dot"></div></div>
+    <input type="text" id="mod-focus" placeholder="Optional: specific question or focus..." style="margin-bottom:12px">
+    <button class="btn-analyze" id="analyze-btn" onclick="analyze()" disabled>◈ Analyze My Roster</button>
+  </div>
+
+  <!-- AI REPORT -->
+  <div class="card highlight hidden" id="report-card">
+    <div style="font-family:'Orbitron',sans-serif;font-size:11px;color:#c9a84c;letter-spacing:.12em;text-transform:uppercase;margin-bottom:14px" id="report-title">◉ Holocron Report</div>
+    <div id="report-content"></div>
+    <div class="divider"><div class="divider-dot"></div></div>
+    <button class="reanalyze" onclick="analyze()">↻ Re-analyze</button>
+  </div>
+
+  <div class="footer">SWGOH ROSTER COMMAND · CLAUDE AI · COMLINK</div>
+</div>
+
+<script>
+const EVENTS = [
+  {id:'gl_rey',name:'GL Rey',type:'Galactic Legend'},
+  {id:'gl_kylo',name:'GL Kylo Ren',type:'Galactic Legend'},
+  {id:'gl_lv',name:'GL Lord Vader',type:'Galactic Legend'},
+  {id:'gl_jml',name:'Jedi Master Luke',type:'Galactic Legend'},
+  {id:'gl_jmk',name:'Jedi Master Kenobi',type:'Galactic Legend'},
+  {id:'gl_exec',name:'GL Executor',type:'Galactic Legend'},
+  {id:'gl_see',name:'Sith Eternal Emperor',type:'Galactic Legend'},
+  {id:'cls',name:'Commander Luke',type:'Legendary'},
+  {id:'jtr',name:'Jedi Training Rey',type:'Legendary'},
+  {id:'r2d2',name:'R2-D2',type:'Legendary'},
+  {id:'palpatine',name:'Emperor Palpatine',type:'Legendary'},
+  {id:'bb8',name:'BB-8',type:'Legendary'},
+  {id:'chewbacca',name:'Chewbacca',type:'Legendary'},
+  {id:'cpit',name:'Challenge Pit (CPIT)',type:'Raid'},
+  {id:'hstr',name:'Heroic Sith Raid',type:'Raid'},
+  {id:'krayt',name:'Krayt Dragon Raid',type:'Raid'},
+  {id:'rancor',name:'Heroic Rancor',type:'Raid'},
+  {id:'lstb',name:'Light Side TB',type:'Territory Battle'},
+  {id:'dstb',name:'Dark Side TB',type:'Territory Battle'},
+  {id:'geo_tb',name:'Geonosis TB',type:'Territory Battle'},
+  {id:'gac',name:'Grand Arena (GAC)',type:'PvP'},
+  {id:'tw',name:'Territory Wars',type:'PvP'},
+  {id:'conquest',name:'Conquest',type:'PvE'},
+];
+
+const CHARS = [
+  'Darth Vader','Darth Revan','Darth Malak','Darth Traya','Darth Nihilus','Darth Sion',
+  'Emperor Palpatine','Grand Admiral Thrawn','Director Krennic','Death Trooper','Shoretrooper',
+  'Moff Gideon','Grand Moff Tarkin','Snowtrooper','TIE Fighter Pilot',
+  'Luke Skywalker (Farmboy)','Commander Luke Skywalker','Jedi Master Luke Skywalker',
+  'Han Solo','Chewbacca','Leia Organa','Princess Leia','R2-D2','C-3PO',
+  'Obi-Wan Kenobi (Old Ben)','Jedi Master Kenobi','Hermit Yoda',
+  'Rey','Jedi Training Rey','Finn','Poe Dameron','BB-8','Resistance Hero Finn','Resistance Hero Poe',
+  'Kylo Ren','Kylo Ren (Unmasked)','First Order TIE Pilot','First Order Executioner','General Hux',
+  'Darth Maul','Savage Opress','Nightsister Zombie','Mother Talzin','Asajj Ventress',
+  'General Kenobi','Ahsoka Tano','Padme Amidala','Anakin Skywalker','Captain Rex','Echo','Fives','Clone Sergeant',
+  'Mace Windu','Ki-Adi-Mundi','Kit Fisto','Aayla Secura','Ima-Gun Di',
+  'Boba Fett','Jango Fett','Bossk','Dengar','Cad Bane','Greedo','Zam Wesell',
+  'The Mandalorian','Grogu','Greef Karga','Cara Dune','Fennec Shand','Boba Fett (Scion of Jango)',
+  'Hera Syndulla','Ezra Bridger','Kanan Jarrus','Sabine Wren','Zeb Orrelios',
+  'Jyn Erso','Cassian Andor','K-2SO','Chirrut Imwe','Baze Malbus','Bodhi Rook',
+  'Iden Versio','Range Trooper','Magmatrooper','Imperial Probe Droid',
+  'Old Daka','Nightsister Acolyte','Nightsister Initiate',
+  'Wampa','Geonosian Soldier','Geonosian Spy','Poggle the Lesser','Sun Fac','Geonosian Brood Alpha',
+  'Wat Tambor','General Grievous','B1 Battle Droid','B2 Super Battle Droid','Droideka','Nute Gunray',
+  'Lando Calrissian','Qi\'ra','Enfys Nest','L3-37','Aurra Sing',
+  'Sith Trooper','Sith Assassin','Sith Marauder','Sith Empire Trooper',
+  'Bastila Shan','Bastila Shan (Fallen)','Carth Onasi','Canderous Ordo','HK-47','Mission Vao','Zaalbar','Jolee Bindo',
+  'Saw Gerrera','Mon Mothma','Wedge Antilles','Biggs Darklighter','Admiral Ackbar',
+  'Supreme Leader Kylo Ren','Lord Vader','Sith Eternal Emperor','Jedi Knight Revan',
+];
+
+const GEAR_COLORS = {1:'#888',2:'#888',3:'#7aabcc',4:'#7aabcc',5:'#7aabcc',6:'#7aabcc',7:'#7ac87a',8:'#7ac87a',9:'#7ac87a',10:'#7ac87a',11:'#7ac87a',12:'#c9a84c',13:'#c9a84c'};
+
+let mode = 'auto';
+let fetchedRoster = [];
+let manualRoster = [];
+let selectedEvent = '';
+let formStar=7, formGear=13, formRelic=0, formZeta=0, formOmi=false;
+
+// Stars background
+(function(){
+  const s=document.getElementById('stars');
+  for(let i=0;i<55;i++){
+    const d=document.createElement('div');
+    d.className='star';
+    const size=Math.random()*2+0.5, delay=Math.random()*3;
+    d.style.cssText=`left:${Math.random()*100}%;top:${Math.random()*100}%;width:${size}px;height:${size}px;opacity:${Math.random()*.5+.2};--d:${2+delay}s;animation-delay:${delay}s`;
+    s.appendChild(d);
+  }
+})();
+
+// Event buttons
+(function(){
+  const groups={};
+  EVENTS.forEach(e=>{(groups[e.type]=groups[e.type]||[]).push(e);});
+  const container=document.getElementById('event-groups');
+  Object.entries(groups).forEach(([type,evs])=>{
+    const g=document.createElement('div');
+    g.className='event-group';
+    g.innerHTML=`<div class="event-group-label">— ${type}</div><div class="event-buttons">${evs.map(e=>`<button class="event-btn" id="ev-${e.id}" onclick="selectEvent('${e.id}')">${e.name}</button>`).join('')}</div>`;
+    container.appendChild(g);
+  });
+})();
+
+// Gear / relic buttons
+(function(){
+  const gb=document.getElementById('gear-buttons');
+  for(let g=1;g<=13;g++){
+    const b=document.createElement('button');
+    b.className='gear-btn'; b.id=`g${g}`; b.textContent=`G${g}`; b.onclick=()=>setGear(g);
+    b.style.color=GEAR_COLORS[g]; gb.appendChild(b);
+  }
+  const rb=document.getElementById('relic-buttons');
+  for(let r=0;r<=9;r++){
+    const b=document.createElement('button');
+    b.className='gear-btn'; b.id=`r${r}`; b.textContent=r===0?'G13':`R${r}`; b.onclick=()=>setRelic(r);
+    rb.appendChild(b);
+  }
+  setGear(13);
+})();
+
+function switchMode(m){
+  mode=m;
+  document.getElementById('tab-auto').classList.toggle('active',m==='auto');
+  document.getElementById('tab-manual').classList.toggle('active',m==='manual');
+  document.getElementById('panel-auto').classList.toggle('hidden',m!=='auto');
+  document.getElementById('panel-manual').classList.toggle('hidden',m!=='manual');
+  document.getElementById('add-form-card').classList.add('hidden');
+  checkShowEventCard();
+}
+
+function activeRoster(){return mode==='auto'?fetchedRoster:manualRoster;}
+
+function checkShowEventCard(){
+  document.getElementById('event-card').classList.toggle('hidden',activeRoster().length===0);
+}
+
+async function fetchRoster(){
+  const code=document.getElementById('ally-code').value.replace(/\D/g,'');
+  if(!code) return;
+  const btn=document.getElementById('fetch-btn');
+  btn.disabled=true;
+  fetchedRoster=[];
+  checkShowEventCard();
+  hideEl('fetch-error'); hideEl('fetch-result');
+  showStatus('📡 Fetching your roster...');
+
+  try {
+    // Call our own server's proxy endpoint - no CORS issues
+    const res = await fetch('/api/player', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({payload:{allyCode:code},enums:false})
+    });
+    if(!res.ok) throw new Error(`Server error ${res.status}. Check your ally code.`);
+    const data = await res.json();
+    if(data.error) throw new Error(data.error);
+
+    const name=data.name||'Commander';
+    const gp=data.galacticPower?Number(data.galacticPower).toLocaleString():'';
+
+    fetchedRoster=(data.rosterUnit||[]).map(u=>{
+      const baseId=(u.definitionId||'').split(':')[0];
+      const stars=u.currentTier||1;
+      const relicTier=(u.relic&&u.relic.currentTier)||0;
+      const relic=relicTier>2?relicTier-2:0;
+      const gear=relic>0?13:(stars>=7?12:8);
+      const skills=u.skill||[];
+      const zetas=skills.filter(s=>s.isZeta).length;
+      const omicron=skills.some(s=>s.isOmicron);
+      return {id:baseId,name:formatId(baseId),stars,gear,relic,zetas,omicron};
+    }).filter(u=>u.id&&u.name!=='Unknown');
+
+    hideStatus();
+    const result=document.getElementById('fetch-result');
+    result.innerHTML=`
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+        <div><div class="success-text">✓ ${name}</div>${gp?`<div style="color:#666;font-size:11px">GP: ${gp}</div>`:''}</div>
+        <div style="color:#888;font-size:12px">${fetchedRoster.length} units</div>
+      </div>
+      <div class="unit-list">
+        ${fetchedRoster.slice(0,15).map(unitRowHTML).join('')}
+        ${fetchedRoster.length>15?`<div style="text-align:center;color:#555;font-size:11px;padding:6px">+ ${fetchedRoster.length-15} more units loaded</div>`:''}
+      </div>`;
+    showEl('fetch-result');
+    checkShowEventCard();
+  } catch(e){
+    hideStatus();
+    document.getElementById('fetch-error').textContent='⚠ '+e.message;
+    showEl('fetch-error');
+  } finally {
+    btn.disabled=false;
+  }
+}
+
+function formatId(id){
+  if(!id) return 'Unknown';
+  const map={
+    'DARTHVADER':'Darth Vader','EMPERORPALPATINE':'Emperor Palpatine','GRANDADMIRALTHRAWN':'Grand Admiral Thrawn',
+    'COMMANDERLUKESKYWALKER':'Commander Luke Skywalker','JEDIMASTERLUKESKYWALKER':'Jedi Master Luke Skywalker',
+    'HANSOLO':'Han Solo','CHEWBACCALEGENDARY':'Chewbacca','LEIA':'Leia Organa','R2D2_LEGENDARY':'R2-D2',
+    'C3POLEGENDARY':'C-3PO','JEDIMASTERKENOBI':'Jedi Master Kenobi','HERMITYODA':'Hermit Yoda',
+    'REY':'Rey','REYJEDITRAINING':'Jedi Training Rey','FINN':'Finn','POEDAMERON':'Poe Dameron',
+    'BB8':'BB-8','KYLO':'Kylo Ren','KYLOUNMASKED':'Kylo Ren (Unmasked)',
+    'DARTHMAUL':'Darth Maul','SAVAGEOPRESS':'Savage Opress','MOTHERTALZIN':'Mother Talzin',
+    'ASAJJVENTRESS':'Asajj Ventress','NIGHTSISTERZOMBIE':'Nightsister Zombie',
+    'GENERALKENOBI':'General Kenobi','AHSOKATANO':'Ahsoka Tano','PADMEAMIDALA':'Padme Amidala',
+    'ANAKINSKYWALKER':'Anakin Skywalker','CAPTAINREX':'Captain Rex',
+    'BOBAFETT':'Boba Fett','JANGOFETT':'Jango Fett','BOSSK':'Bossk',
+    'THEMANDALORIAN':'The Mandalorian','GROGU':'Grogu',
+    'DARTHREVAN':'Darth Revan','DARTHMALAK':'Darth Malak','BASTILASHANDARK':'Bastila Shan (Fallen)',
+    'BASTILASHA':'Bastila Shan','CARTHONASI':'Carth Onasi','HK47':'HK-47',
+    'WATTAMBOR':'Wat Tambor','GEONOSIANBROODALPHA':'Geonosian Brood Alpha',
+    'MOFFGIDEON':'Moff Gideon','LORDVADER':'Lord Vader','SUPREMELEADERKYLO':'Supreme Leader Kylo Ren',
+    'SITHETERNAL':'Sith Eternal Emperor','JEDIKNIGHTREVAN':'Jedi Knight Revan',
+  };
+  return map[id]||id.replace(/_/g,' ').toLowerCase().replace(/\b\w/g,c=>c.toUpperCase());
+}
+
+function unitRowHTML(u){
+  const lbl=u.relic>0?`R${u.relic}`:`G${u.gear}`;
+  const col=u.relic>0?'#c9a84c':(GEAR_COLORS[u.gear]||'#888');
+  return `<div class="unit-row">
+    <span class="unit-name">${u.name}</span>
+    <span class="badge" style="background:${col}20;border:1px solid ${col}55;color:${col}">${lbl}</span>
+    <span class="badge-stars">${'★'.repeat(Math.min(u.stars,7))}</span>
+    ${u.zetas>0?`<span class="badge-zeta">ζ${u.zetas}</span>`:''}
+    ${u.omicron?`<span class="badge-omi">Ω</span>`:''}
+  </div>`;
+}
+
+function showAddForm(){
+  document.getElementById('add-form-container').classList.add('hidden');
+  document.getElementById('add-form-card').classList.remove('hidden');
+  document.getElementById('char-name').value='';
+  formStar=7;formGear=13;formRelic=0;formZeta=0;formOmi=false;
+  setStar(7);setGear(13);setRelic(0);setZeta(0);
+  document.getElementById('omi-btn').textContent='Ω No';
+  document.getElementById('omi-btn').classList.remove('active-o');
+}
+function hideAddForm(){
+  document.getElementById('add-form-card').classList.add('hidden');
+  document.getElementById('add-form-container').classList.remove('hidden');
+}
+function setStar(s){formStar=s;[4,5,6,7].forEach(n=>document.getElementById(`s${n}`).classList.toggle('active',n===s));}
+function setGear(g){
+  formGear=g;
+  for(let i=1;i<=13;i++){
+    const b=document.getElementById(`g${i}`),active=i===g&&formRelic===0;
+    b.style.background=active?`${GEAR_COLORS[i]}25`:'rgba(255,255,255,.03)';
+    b.style.borderColor=active?GEAR_COLORS[i]:'rgba(255,255,255,.08)';
+    b.style.color=active?GEAR_COLORS[i]:'#444';
+  }
+  document.getElementById('relic-section').classList.toggle('hidden',g!==13);
+  if(g!==13)formRelic=0;
+}
+function setRelic(r){
+  formRelic=r;
+  for(let i=0;i<=9;i++){
+    const b=document.getElementById(`r${i}`),active=i===r;
+    b.style.background=active?'rgba(201,168,76,.2)':'rgba(255,255,255,.03)';
+    b.style.borderColor=active?'#c9a84c':'rgba(255,255,255,.08)';
+    b.style.color=active?'#c9a84c':'#444';
+  }
+}
+function setZeta(z){formZeta=z;[0,1,2,3].forEach(n=>document.getElementById(`z${n}`).classList.toggle('active-z',n===z));}
+function toggleOmi(){
+  formOmi=!formOmi;
+  const b=document.getElementById('omi-btn');
+  b.textContent=`Ω ${formOmi?'Yes':'No'}`;
+  b.classList.toggle('active-o',formOmi);
+}
+function addCharacter(){
+  const name=document.getElementById('char-name').value.trim();
+  if(!name)return;
+  manualRoster.push({id:Date.now(),name,stars:formStar,gear:formGear,relic:formRelic,zetas:formZeta,omicron:formOmi});
+  renderManualRoster();
+  hideAddForm();
+  checkShowEventCard();
+}
+function renderManualRoster(){
+  const list=document.getElementById('manual-roster-list');
+  if(!manualRoster.length){list.innerHTML='';return;}
+  list.innerHTML=`<div class="card-label" style="color:#666">Roster · ${manualRoster.length} units</div>
+    <div class="unit-list" style="margin-bottom:0">${manualRoster.map(u=>{
+      const lbl=u.relic>0?`R${u.relic}`:`G${u.gear}`,col=u.relic>0?'#c9a84c':(GEAR_COLORS[u.gear]||'#888');
+      return `<div class="unit-row">
+        <span class="unit-name">${u.name}</span>
+        <span class="badge" style="background:${col}20;border:1px solid ${col}55;color:${col}">${lbl}</span>
+        <span class="badge-stars">${'★'.repeat(Math.min(u.stars,7))}</span>
+        ${u.zetas>0?`<span class="badge-zeta">ζ${u.zetas}</span>`:''}
+        ${u.omicron?`<span class="badge-omi">Ω</span>`:''}
+        <button onclick="removeUnit(${u.id})" style="background:none;border:none;color:#555;cursor:pointer;font-size:16px;padding:0 2px;line-height:1">×</button>
+      </div>`;
+    }).join('')}</div><div style="height:10px"></div>`;
+}
+function removeUnit(id){manualRoster=manualRoster.filter(u=>u.id!==id);renderManualRoster();checkShowEventCard();}
+function handleNameInput(v){
+  const ac=document.getElementById('autocomplete');
+  if(v.length<2){ac.classList.add('hidden');return;}
+  const matches=CHARS.filter(c=>c.toLowerCase().includes(v.toLowerCase())).slice(0,6);
+  if(!matches.length){ac.classList.add('hidden');return;}
+  ac.innerHTML=matches.map(m=>`<div class="autocomplete-item" onmousedown="pickChar('${m.replace(/'/g,"\\'")}')">${m}</div>`).join('');
+  ac.classList.remove('hidden');
+}
+function pickChar(name){document.getElementById('char-name').value=name;hideAutocomplete();}
+function hideAutocomplete(){document.getElementById('autocomplete').classList.add('hidden');}
+function selectEvent(id){
+  selectedEvent=id;
+  document.querySelectorAll('.event-btn').forEach(b=>b.classList.remove('selected'));
+  document.getElementById(`ev-${id}`)?.classList.add('selected');
+  document.getElementById('analyze-btn').disabled=false;
+  document.getElementById('report-card').classList.add('hidden');
+}
+
+async function analyze(){
+  if(!selectedEvent||!activeRoster().length)return;
+  const btn=document.getElementById('analyze-btn');
+  btn.disabled=true;btn.textContent='◈ Consulting Holocron...';
+  const reportCard=document.getElementById('report-card');
+  reportCard.classList.remove('hidden');
+  const content=document.getElementById('report-content');
+  content.innerHTML=`<div class="status"><div class="spinner"></div>Consulting the archives...</div>`;
+  reportCard.scrollIntoView({behavior:'smooth',block:'start'});
+
+  const eventName=EVENTS.find(e=>e.id===selectedEvent)?.name||selectedEvent;
+  const roster=activeRoster();
+  const pName=mode==='manual'?document.getElementById('player-name').value||'Commander':'Commander';
+  const pGP=mode==='manual'?document.getElementById('player-gp').value:'';
+  const focus=document.getElementById('mod-focus').value;
+  const rosterText=roster.map(u=>`${u.name} | ${u.stars}★ | ${u.relic>0?`R${u.relic}`:`G${u.gear}`}${u.zetas?` | ζ${u.zetas}`:''}${u.omicron?' | Ω':''}`).join('\n');
+
+  const prompt=`You are an expert SWGOH analyst. Give specific, actionable advice.
+
+PLAYER: ${pName}${pGP?' | GP: '+pGP:''}
+
+ROSTER:
+${rosterText}
+
+TARGET: ${eventName}
+${focus?'NOTES: '+focus:''}
+
+### Recommended Team
+Best 5 characters from this roster for ${eventName}. Name each and their role.
+
+### Modding Guide
+For each: mod sets, priority primaries, speed target.
+
+### Upgrade Priorities
+Top 3 to gear/relic next with reasons based on current levels.
+
+### What You're Missing
+Key absent characters and fastest way to get them.
+
+### Do This Today
+2-3 immediate actions to improve right now.
+
+Be direct. Use exact names from the roster.`;
+
+  try {
+    // Call our own server's Claude proxy - keeps API calls server-side
+    const res=await fetch('/api/analyze',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,messages:[{role:'user',content:prompt}]})
+    });
+    const data=await res.json();
+    const text=data.content?.map(b=>b.text||'').join('')||data.error||'No response.';
+    const html=text
+      .replace(/### (.+)/g,'<h3>$1</h3>')
+      .replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>')
+      .replace(/^[-•] (.+)/gm,'<li>$1</li>')
+      .replace(/(<li>[^<]*<\/li>\n?)+/g,m=>`<ul>${m}</ul>`)
+      .split('\n\n').map(p=>p.startsWith('<')?p:p.trim()?`<p>${p}</p>`:'').join('');
+    content.innerHTML=`<div class="ai-report">${html}</div>`;
+    document.getElementById('report-title').textContent=`◉ Holocron Report · ${eventName}`;
+  } catch(e){
+    content.innerHTML=`<div class="error-box">Could not reach server. Please try again.</div>`;
+  } finally {
+    btn.disabled=false;btn.textContent='◈ Analyze My Roster';
+  }
+}
+
+function showEl(id){document.getElementById(id).classList.remove('hidden');}
+function hideEl(id){document.getElementById(id).classList.add('hidden');}
+function showStatus(msg){const s=document.getElementById('fetch-status');s.innerHTML=`<div class="status"><div class="spinner"></div>${msg}</div>`;s.classList.remove('hidden');}
+function hideStatus(){hideEl('fetch-status');}
+</script>
+</body>
+</html>
