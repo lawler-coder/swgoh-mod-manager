@@ -1,5 +1,4 @@
 const express = require('express');
-const fetch = require('node-fetch');
 const path = require('path');
 
 const app = express();
@@ -9,24 +8,38 @@ const COMLINK = 'https://swgoh-app.onrender.com';
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
+// Test Comlink connectivity
+app.get('/api/test', async (req, res) => {
+  try {
+    const response = await fetch(`${COMLINK}/metadata`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: '{}'
+    });
+    const text = await response.text();
+    res.json({ ok: true, status: response.status, comlink: COMLINK, preview: text.slice(0, 300) });
+  } catch (err) {
+    res.json({ ok: false, error: err.message, comlink: COMLINK });
+  }
+});
+
 // Proxy player roster from Comlink
 app.post('/api/player', async (req, res) => {
-  console.log('Player request received:', JSON.stringify(req.body));
-  console.log('Calling Comlink at:', `${COMLINK}/player`);
+  console.log('Player request body:', JSON.stringify(req.body));
   try {
     const response = await fetch(`${COMLINK}/player`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(req.body),
+      body: JSON.stringify(req.body)
     });
-    console.log('Comlink response status:', response.status);
+    console.log('Comlink status:', response.status);
+    const text = await response.text();
     if (!response.ok) {
-      const text = await response.text();
-      console.log('Comlink error body:', text);
-      throw new Error(`Comlink returned ${response.status}: ${text}`);
+      console.error('Comlink error:', text.slice(0, 500));
+      return res.status(502).json({ error: `Comlink error ${response.status}: ${text.slice(0, 200)}` });
     }
-    const data = await response.json();
-    console.log('Comlink returned units:', (data.rosterUnit||[]).length);
+    const data = JSON.parse(text);
+    console.log('Units returned:', (data.rosterUnit || []).length);
     res.json(data);
   } catch (err) {
     console.error('Player proxy error:', err.message);
@@ -34,7 +47,7 @@ app.post('/api/player', async (req, res) => {
   }
 });
 
-// Proxy Claude API (keeps API key off the client — add yours here or use env var)
+// Proxy Claude API
 app.post('/api/analyze', async (req, res) => {
   try {
     const response = await fetch('https://api.anthropic.com/v1/messages', {
@@ -42,9 +55,9 @@ app.post('/api/analyze', async (req, res) => {
       headers: {
         'Content-Type': 'application/json',
         'anthropic-version': '2023-06-01',
-        'x-api-key': process.env.ANTHROPIC_API_KEY || '',
+        'x-api-key': process.env.ANTHROPIC_API_KEY || ''
       },
-      body: JSON.stringify(req.body),
+      body: JSON.stringify(req.body)
     });
     const data = await response.json();
     res.json(data);
